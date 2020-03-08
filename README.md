@@ -36,3 +36,9 @@ You need a debian 10 build machine with root rights.
 
 The resulting image rockpi4.img.gz can be flashed to an emmc module or a sd
 card. However, the bootloader wants to load its environment from emmc.
+
+## Login
+
+You can login with user _root_ and password _changeme_ using the serial console
+or, when it works, using hdmi and an usb keyboard. root login via network
+won't work.
