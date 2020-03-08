@@ -1,0 +1,24 @@
+diff -Naurp orig/arch/arm64/boot/dts/rockchip/rk3399.dtsi patched/arch/arm64/boot/dts/rockchip/rk3399.dtsi
+--- orig/arch/arm64/boot/dts/rockchip/rk3399.dtsi	2019-11-25 01:32:01.000000000 +0100
++++ patched/arch/arm64/boot/dts/rockchip/rk3399.dtsi	2020-02-02 19:06:56.022264832 +0100
+@@ -331,7 +331,7 @@
+ 		interrupts = <GIC_SPI 11 IRQ_TYPE_LEVEL_HIGH 0>;
+ 		arasan,soc-ctl-syscon = <&grf>;
+ 		assigned-clocks = <&cru SCLK_EMMC>;
+-		assigned-clock-rates = <200000000>;
++		assigned-clock-rates = <150000000>;
+ 		clocks = <&cru SCLK_EMMC>, <&cru ACLK_EMMC>;
+ 		clock-names = "clk_xin", "clk_ahb";
+ 		clock-output-names = "emmc_cardclock";
+diff -Naurp orig/drivers/mmc/host/sdhci-of-arasan.c patched/drivers/mmc/host/sdhci-of-arasan.c
+--- orig/drivers/mmc/host/sdhci-of-arasan.c	2019-11-25 01:32:01.000000000 +0100
++++ patched/drivers/mmc/host/sdhci-of-arasan.c	2020-02-02 19:08:55.587951418 +0100
+@@ -842,8 +842,6 @@ static int sdhci_arasan_probe(struct pla
+ 					sdhci_arasan_hs400_enhanced_strobe;
+ 		host->mmc_host_ops.start_signal_voltage_switch =
+ 					sdhci_arasan_voltage_switch;
+-		sdhci_arasan->has_cqe = true;
+-		host->mmc->caps2 |= MMC_CAP2_CQE;
+ 
+ 		if (!of_property_read_bool(np, "disable-cqe-dcmd"))
+ 			host->mmc->caps2 |= MMC_CAP2_CQE_DCMD;

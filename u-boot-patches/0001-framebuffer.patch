@@ -1,0 +1,97 @@
+diff -Naurp u-boot-source.orig/arch/arm/dts/rk3399.dtsi u-boot-source.patched/arch/arm/dts/rk3399.dtsi
+--- u-boot-source.orig/arch/arm/dts/rk3399.dtsi	2020-02-29 15:14:00.922456128 +0100
++++ u-boot-source.patched/arch/arm/dts/rk3399.dtsi	2020-03-01 14:04:12.368248693 +0100
+@@ -1530,27 +1530,27 @@
+ 			#size-cells = <0>;
+ 
+ 			vopl_out_mipi: endpoint@0 {
+-				reg = <0>;
++				reg = <3>;
+ 				remote-endpoint = <&mipi_in_vopl>;
+ 			};
+ 
+ 			vopl_out_edp: endpoint@1 {
+-				reg = <1>;
++				reg = <0>;
+ 				remote-endpoint = <&edp_in_vopl>;
+ 			};
+ 
+ 			vopl_out_hdmi: endpoint@2 {
+-				reg = <2>;
++				reg = <1>;
+ 				remote-endpoint = <&hdmi_in_vopl>;
+ 			};
+ 
+ 			vopl_out_mipi1: endpoint@3 {
+-				reg = <3>;
++				reg = <6>;
+ 				remote-endpoint = <&mipi1_in_vopl>;
+ 			};
+ 
+ 			vopl_out_dp: endpoint@4 {
+-				reg = <4>;
++				reg = <6>;
+ 				remote-endpoint = <&dp_in_vopl>;
+ 			};
+ 		};
+diff -Naurp u-boot-source.orig/drivers/clk/rockchip/clk_rk3399.c u-boot-source.patched/drivers/clk/rockchip/clk_rk3399.c
+--- u-boot-source.orig/drivers/clk/rockchip/clk_rk3399.c	2020-02-29 15:14:01.410447843 +0100
++++ u-boot-source.patched/drivers/clk/rockchip/clk_rk3399.c	2020-03-01 14:04:12.376248521 +0100
+@@ -922,6 +922,11 @@ static ulong rk3399_clk_get_rate(struct
+ 	case DCLK_VOP0:
+ 	case DCLK_VOP1:
+ 		break;
++	case ACLK_VOP0:
++	case ACLK_VOP1:
++	case HCLK_VOP0:
++	case HCLK_VOP1:
++		break;
+ 	case PCLK_EFUSE1024NS:
+ 		break;
+ 	case SCLK_SARADC:
+@@ -993,6 +998,18 @@ static ulong rk3399_clk_set_rate(struct
+ 	case DCLK_VOP1:
+ 		ret = rk3399_vop_set_clk(priv->cru, clk->id, rate);
+ 		break;
++	case ACLK_VOP0:
++		rk_clrreg(priv->cru->clkgate_con + 28, BIT(3));
++		break;
++	case ACLK_VOP1:
++		rk_clrreg(priv->cru->clkgate_con + 28, BIT(7));
++		break;
++	case HCLK_VOP0:
++		rk_clrreg(priv->cru->clkgate_con + 28, BIT(2));
++		break;
++	case HCLK_VOP1:
++		rk_clrreg(priv->cru->clkgate_con + 28, BIT(6));
++		break;
+ 	case SCLK_DDRCLK:
+ 		ret = rk3399_ddr_set_clk(priv->cru, rate);
+ 		break;
+diff -Naurp u-boot-source.orig/drivers/video/dw_hdmi.c u-boot-source.patched/drivers/video/dw_hdmi.c
+--- u-boot-source.orig/drivers/video/dw_hdmi.c	2020-02-29 15:14:01.558445329 +0100
++++ u-boot-source.patched/drivers/video/dw_hdmi.c	2020-03-01 14:05:04.963117153 +0100
+@@ -327,7 +327,7 @@ static void hdmi_phy_i2c_write(struct dw
+ 	hdmi_write(hdmi, HDMI_PHY_I2CM_OPERATION_ADDR_WRITE,
+ 		   HDMI_PHY_I2CM_OPERATION_ADDR);
+ 
+-	hdmi_phy_wait_i2c_done(hdmi, 1000);
++	hdmi_phy_wait_i2c_done(hdmi, 50);
+ }
+ 
+ static void hdmi_phy_enable_power(struct dw_hdmi *hdmi, uint enable)
+diff -Naurp u-boot-source.orig/include/configs/rk3399_common.h u-boot-source.patched/include/configs/rk3399_common.h
+--- u-boot-source.orig/include/configs/rk3399_common.h	2020-02-29 15:14:01.622444242 +0100
++++ u-boot-source.patched/include/configs/rk3399_common.h	2020-03-01 14:04:12.376248521 +0100
+@@ -54,7 +54,10 @@
+ 	"ramdisk_addr_r=0x06000000\0"
+ 
+ #ifndef ROCKCHIP_DEVICE_SETTINGS
+-#define ROCKCHIP_DEVICE_SETTINGS
++#define ROCKCHIP_DEVICE_SETTINGS \
++	"stdin=serial,usbkbd\0" \
++	"stdout=serial,vidconsole\0" \
++	"stderr=serial,vidconsole\0"
+ #endif
+ 
+ #include <config_distro_bootcmd.h>

@@ -1,0 +1,45 @@
+diff -Naurp dts.orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts dts.patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts
+--- dts.orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts	2019-11-25 01:32:01.000000000 +0100
++++ dts.patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts	2020-03-06 18:18:40.076488288 +0100
+@@ -82,7 +82,6 @@
+ 		pinctrl-names = "default";
+ 		pinctrl-0 = <&vcc5v0_host_en>;
+ 		regulator-name = "vcc5v0_host";
+-		regulator-always-on;
+ 		vin-supply = <&vcc5v0_sys>;
+ 	};
+ 
+@@ -93,7 +92,6 @@
+ 		pinctrl-names = "default";
+ 		pinctrl-0 = <&vcc5v0_typec_en>;
+ 		regulator-name = "vcc5v0_typec";
+-		regulator-always-on;
+ 		vin-supply = <&vcc5v0_sys>;
+ 	};
+ 
+@@ -600,10 +598,16 @@
+ 
+ &tcphy0 {
+ 	status = "okay";
++	tcphy0_usb3: usb3-port {
++		phy-supply = <&vcc5v0_typec>;
++	};
+ };
+ 
+ &tcphy1 {
+ 	status = "okay";
++	tcphy1_usb3: usb3-port {
++		phy-supply = <&vcc5v0_host>;
++	};
+ };
+ 
+ &tsadc {
+@@ -684,7 +688,7 @@
+ 
+ &usbdrd_dwc3_0 {
+ 	status = "okay";
+-	dr_mode = "otg";
++	dr_mode = "host";
+ };
+ 
+ &usbdrd3_1 {

@@ -1,0 +1,85 @@
+diff -Naurp u-boot-source.orig/drivers/mmc/mmc.c u-boot-source.patched/drivers/mmc/mmc.c
+--- u-boot-source.orig/drivers/mmc/mmc.c	2020-02-29 15:14:01.446447231 +0100
++++ u-boot-source.patched/drivers/mmc/mmc.c	2020-03-03 22:08:51.661786805 +0100
+@@ -26,8 +26,10 @@
+ static int mmc_set_signal_voltage(struct mmc *mmc, uint signal_voltage);
+ static int mmc_power_cycle(struct mmc *mmc);
+ #if !CONFIG_IS_ENABLED(MMC_TINY)
++#ifdef BROKEN_MODE_SWITCH
+ static int mmc_select_mode_and_width(struct mmc *mmc, uint card_caps);
+ #endif
++#endif
+ 
+ #if !CONFIG_IS_ENABLED(DM_MMC)
+ 
+@@ -816,6 +818,7 @@ int mmc_switch(struct mmc *mmc, u8 set,
+ 	return __mmc_switch(mmc, set, index, value, true);
+ }
+ 
++#ifdef BROKEN_MODE_SWITCH
+ #if !CONFIG_IS_ENABLED(MMC_TINY)
+ static int mmc_set_card_speed(struct mmc *mmc, enum bus_mode mode,
+ 			      bool hsdowngrade)
+@@ -885,6 +888,8 @@ static int mmc_set_card_speed(struct mmc
+ 
+ 	return 0;
+ }
++#endif
++#endif
+ 
+ static int mmc_get_capabilities(struct mmc *mmc)
+ {
+@@ -940,7 +945,6 @@ static int mmc_get_capabilities(struct m
+ 
+ 	return 0;
+ }
+-#endif
+ 
+ static int mmc_set_capacity(struct mmc *mmc, int part_num)
+ {
+@@ -1788,6 +1792,7 @@ error:
+  * This can be used to check that the transfer is working
+  * as expected.
+  */
++#ifdef BROKEN_MODE_SWITCH
+ static int mmc_read_and_compare_ext_csd(struct mmc *mmc)
+ {
+ 	int err;
+@@ -1816,6 +1821,7 @@ static int mmc_read_and_compare_ext_csd(
+ 
+ 	return -EBADMSG;
+ }
++#endif
+ 
+ #if CONFIG_IS_ENABLED(MMC_IO_VOLTAGE)
+ static int mmc_set_lowest_voltage(struct mmc *mmc, enum bus_mode mode,
+@@ -1866,6 +1872,7 @@ static inline int mmc_set_lowest_voltage
+ }
+ #endif
+ 
++#ifdef BROKEN_EMMC_SWITCH
+ static const struct mode_width_tuning mmc_modes_by_pref[] = {
+ #if CONFIG_IS_ENABLED(MMC_HS400_ES_SUPPORT)
+ 	{
+@@ -2153,6 +2160,7 @@ error:
+ 	return -ENOTSUPP;
+ }
+ #endif
++#endif
+ 
+ #if CONFIG_IS_ENABLED(MMC_TINY)
+ DEFINE_CACHE_ALIGN_BUFFER(u8, ext_csd_bkup, MMC_MAX_BLOCK_LEN);
+@@ -2561,7 +2569,13 @@ static int mmc_startup(struct mmc *mmc)
+ 		err = mmc_get_capabilities(mmc);
+ 		if (err)
+ 			return err;
++#ifdef BROKEN_MODE_SWITCH
+ 		mmc_select_mode_and_width(mmc, mmc->card_caps);
++#else
++		mmc_set_clock(mmc, mmc->legacy_speed, false);
++		mmc_select_mode(mmc, IS_SD(mmc) ? SD_LEGACY : MMC_LEGACY);
++		mmc_set_bus_width(mmc, 1);
++#endif
+ 	}
+ #endif
+ 	if (err)

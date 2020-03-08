@@ -1,0 +1,51 @@
+diff -Naurp u-boot-source.orig/common/usb.c u-boot-source.patched/common/usb.c
+--- u-boot-source.orig/common/usb.c	2020-02-29 15:14:01.326449269 +0100
++++ u-boot-source.patched/common/usb.c	2020-03-01 19:59:34.116322748 +0100
+@@ -1043,7 +1043,7 @@ static int usb_prepare_device(struct usb
+ 		return err;
+ 
+ 	dev->devnum = addr;
+-
++	mdelay(1);
+ 	err = usb_set_address(dev); /* set address */
+ 
+ 	if (err < 0) {
+diff -Naurp u-boot-source.orig/common/usb_hub.c u-boot-source.patched/common/usb_hub.c
+--- u-boot-source.orig/common/usb_hub.c	2020-02-29 15:14:01.326449269 +0100
++++ u-boot-source.patched/common/usb_hub.c	2020-03-01 19:59:50.803966044 +0100
+@@ -166,6 +166,10 @@ static void usb_hub_power_on(struct usb_
+ 
+ 	dev = hub->pusb_dev;
+ 
++	if (pgood_delay < 100) {
++		pgood_delay = 100;
++	}
++
+ 	debug("enabling power on all ports\n");
+ 	for (i = 0; i < dev->maxchild; i++) {
+ 		usb_set_port_feature(dev, i + 1, USB_PORT_FEAT_POWER);
+@@ -387,6 +391,8 @@ int usb_hub_port_connect_change(struct u
+ 		break;
+ 	}
+ 
++	mdelay(10);
++
+ #if CONFIG_IS_ENABLED(DM_USB)
+ 	struct udevice *child;
+ 
+diff -Naurp u-boot-source.orig/common/usb_kbd.c u-boot-source.patched/common/usb_kbd.c
+--- u-boot-source.orig/common/usb_kbd.c	2020-02-29 15:14:01.326449269 +0100
++++ u-boot-source.patched/common/usb_kbd.c	2020-03-01 19:59:34.116322748 +0100
+@@ -517,8 +517,12 @@ static int usb_kbd_probe_dev(struct usb_
+ 	if (usb_get_report(dev, iface->desc.bInterfaceNumber,
+ 			   1, 0, data->new, USB_KBD_BOOT_REPORT_SIZE) < 0) {
+ #else
++#if 0
+ 	if (usb_int_msg(dev, data->intpipe, data->new, data->intpktsize,
+ 			data->intinterval, false) < 0) {
++#else
++	if (0) {
++#endif
+ #endif
+ 		printf("Failed to get keyboard state from device %04x:%04x\n",
+ 		       dev->descriptor.idVendor, dev->descriptor.idProduct);

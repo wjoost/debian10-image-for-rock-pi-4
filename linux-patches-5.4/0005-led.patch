@@ -1,0 +1,37 @@
+diff -Naurp orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts
+--- orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts	2019-11-25 01:32:01.000000000 +0100
++++ patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts	2020-01-19 15:34:39.326144774 +0100
+@@ -34,6 +34,19 @@
+ 		reset-gpios = <&gpio0 RK_PB2 GPIO_ACTIVE_LOW>;
+ 	};
+ 
++	leds: gpio-leds {
++		compatible = "gpio-leds";
++		pinctrl-names = "default";
++		pinctrl-0 = <&leds_gpio>;
++		
++		user-led1 {
++			gpios = <&gpio3 RK_PD5 GPIO_ACTIVE_HIGH>;
++			label = "user_led1";
++			linux,default-trigger = "heartbeat";
++			default-state = "off";
++		};
++	};
++
+ 	vcc12v_dcin: dc-12v {
+ 		compatible = "regulator-fixed";
+ 		regulator-name = "vcc12v_dcin";
+@@ -540,6 +553,13 @@
+ 			rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_none>;
+ 		};
+ 	};
++
++	gpio-leds {
++		leds_gpio: leds-gpio {
++			rockchip,pins =
++				<3 RK_PD5 RK_FUNC_GPIO &pcfg_pull_none>;
++		};
++	};
+ };
+ 
+ &pwm2 {

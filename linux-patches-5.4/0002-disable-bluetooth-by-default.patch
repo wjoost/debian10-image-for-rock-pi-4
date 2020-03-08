@@ -1,0 +1,12 @@
+diff -Naurp orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts
+--- orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts	2019-11-25 01:32:01.000000000 +0100
++++ patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts	2020-01-19 17:15:59.633738215 +0100
+@@ -644,7 +644,7 @@
+ &uart0 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&uart0_xfer &uart0_cts &uart0_rts>;
+-	status = "okay";
++	status = "disabled";
+ 
+ 	bluetooth {
+ 		compatible = "brcm,bcm43438-bt";

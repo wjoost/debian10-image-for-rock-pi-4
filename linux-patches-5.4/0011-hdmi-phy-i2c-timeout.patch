@@ -1,0 +1,12 @@
+diff -Naurp linux-5.4.orig/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c linux-5.4.patched/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+--- linux-5.4.orig/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c	2019-11-25 01:32:01.000000000 +0100
++++ linux-5.4.patched/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c	2020-03-01 14:32:47.559498570 +0100
+@@ -1155,7 +1155,7 @@ void dw_hdmi_phy_i2c_write(struct dw_hdm
+ 		    HDMI_PHY_I2CM_DATAO_0_ADDR);
+ 	hdmi_writeb(hdmi, HDMI_PHY_I2CM_OPERATION_ADDR_WRITE,
+ 		    HDMI_PHY_I2CM_OPERATION_ADDR);
+-	hdmi_phy_wait_i2c_done(hdmi, 1000);
++	hdmi_phy_wait_i2c_done(hdmi, 50);
+ }
+ EXPORT_SYMBOL_GPL(dw_hdmi_phy_i2c_write);
+ 

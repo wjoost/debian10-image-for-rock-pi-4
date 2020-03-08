@@ -1,0 +1,11 @@
+diff -Naurp orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts
+--- orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts	2019-11-25 01:32:01.000000000 +0100
++++ patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts	2020-01-19 12:13:42.199302088 +0100
+@@ -158,6 +158,7 @@
+ 	phy-mode = "rgmii";
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&rgmii_pins>;
++	snps,force_thresh_dma_mode;
+ 	snps,reset-gpio = <&gpio3 RK_PB7 GPIO_ACTIVE_LOW>;
+ 	snps,reset-active-low;
+ 	snps,reset-delays-us = <0 10000 50000>;
