@@ -1,7 +1,7 @@
-diff -Naurp orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts
---- orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts	2019-11-25 01:32:01.000000000 +0100
-+++ patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts	2020-01-19 15:34:39.326144774 +0100
-@@ -34,6 +34,19 @@
+diff -Naurp linux-5.4.orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts linux-5.4.patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts
+--- linux-5.4.orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts	2019-11-25 01:32:01.000000000 +0100
++++ linux-5.4.patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts	2020-03-14 20:35:31.744852206 +0100
+@@ -34,6 +34,20 @@
  		reset-gpios = <&gpio0 RK_PB2 GPIO_ACTIVE_LOW>;
  	};
  
@@ -14,6 +14,7 @@ diff -Naurp orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts patched/arch/
 +			gpios = <&gpio3 RK_PD5 GPIO_ACTIVE_HIGH>;
 +			label = "user_led1";
 +			linux,default-trigger = "heartbeat";
++			panic-indicator;
 +			default-state = "off";
 +		};
 +	};
@@ -21,7 +22,7 @@ diff -Naurp orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dts patched/arch/
  	vcc12v_dcin: dc-12v {
  		compatible = "regulator-fixed";
  		regulator-name = "vcc12v_dcin";
-@@ -540,6 +553,13 @@
+@@ -540,6 +554,13 @@
  			rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_none>;
  		};
  	};
