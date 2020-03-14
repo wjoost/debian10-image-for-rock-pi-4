@@ -3,7 +3,7 @@ UBOOT_VERSION=v2020.01
 CROSS_COMPILE=aarch64-linux-gnu-
 M0_CROSS_COMPILE=arm-none-eabi-
 KERNEL_MAJOR=5.4
-KERNEL_MINOR=24
+KERNEL_MINOR=25
 PARALLEL=3
 MIRROR="http://mirror.wtnet.de/debian/"
 #MIRROR="http://debian.mirror.iphh.net/debian/"
@@ -11,7 +11,7 @@ VGNAME?=vgsystem
 
 all: rockpi4.img.gz
 atf-source:
-	git clone -b $(ATF_VERSION) https://github.com/ARM-software/arm-trusted-firmware.git atf-source
+	git clone -b $(ATF_VERSION) https://git.trustedfirmware.org/TF-A/trusted-firmware-a.git atf-source
 	sed -i -E -e 's/(^#define RK3399_BAUDRATE)(.)*$$/#define RK3399_BAUDRATE			1500000/' atf-source/plat/rockchip/rk3399/rk3399_def.h
 	set -e && for p in atf-patches/*.patch; do echo $${p}; patch -d atf-source -p1 -i ../$${p}; done
 
@@ -74,7 +74,7 @@ resize_gpt_disk.aarch64: resize_gpt_disk.c
 debian-rootfs: configure-debian.sh resize_gpt_disk.aarch64
 	sudo rm -rf debian-rootfs
 	mkdir -m 0755 debian-rootfs
-	DEBIAN_FRONTEND=noninteractive sudo --preserve-env=DEBIAN_FRONTEND qemu-debootstrap --arch=arm64 --keyring /usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase --exclude=debfoster,exim4-base,exim4-config,exim4-daemon-light --components main,non-free --include=openssh-server,u-boot-tools,parted,kpartx,initramfs-tools,mmc-utils,cron,curl,nscd,ssh,usbutils,vlan,wget,xz-utils,bzip2,systemd,init,init-system-helpers,iputils-ping,ca-certificates,dc,file,htop,less,openssl,vim-tiny,man-db,locales,keyboard-configuration,fake-hwclock,kbd,lvm2,make,bison,flex,libssl-dev,bc,pkg-config,patch,apt-transport-https,dbus,dialog,apt-utils,ethtool,tcpdump,lsb-base,lsb-release,gcc,libncurses-dev,strace,pciutils,screen,lvm2 buster debian-rootfs ${mirror}
+	DEBIAN_FRONTEND=noninteractive sudo --preserve-env=DEBIAN_FRONTEND qemu-debootstrap --arch=arm64 --keyring /usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase --exclude=debfoster,exim4-base,exim4-config,exim4-daemon-light --components main,non-free --include=openssh-server,u-boot-tools,parted,kpartx,initramfs-tools,mmc-utils,cron,curl,nscd,ssh,usbutils,vlan,wget,xz-utils,bzip2,systemd,init,init-system-helpers,iputils-ping,ca-certificates,dc,file,htop,less,openssl,vim-tiny,man-db,locales,keyboard-configuration,fake-hwclock,kbd,lvm2,make,bison,flex,libssl-dev,bc,pkg-config,patch,apt-transport-https,dbus,dialog,apt-utils,ethtool,tcpdump,lsb-base,lsb-release,gcc,libncurses-dev,strace,pciutils,screen,lvm2,bluetooth,wpasupplicant,wireless-tools buster debian-rootfs ${mirror}
 	sudo cp configure-debian.sh debian-rootfs/
 	sudo cp resize_gpt_disk.aarch64 debian-rootfs/usr/local/sbin/resize_gpt_disk
 	sudo chmod 0744 debian-rootfs/configure-debian.sh debian-rootfs/usr/local/sbin/resize_gpt_disk
@@ -179,7 +179,7 @@ rockpi4.img.gz: debian-rootfs resize_gpt_disk Image-$(KERNEL_MAJOR).$(KERNEL_MIN
 	sudo rm -rf debian-bootfs
 	sudo lvcreate -n lvroot -L 512M ${VGNAME}
 	sudo lvcreate -n lvhome -L 64M ${VGNAME}
-	sudo lvcreate -n lvvar  -L 64M ${VGNAME}
+	sudo lvcreate -n lvvar  -L 256M ${VGNAME}
 	sudo mkfs.ext4 -U $(varid) -L /var -b 4096 -e remount-ro -E lazy_itable_init=0 -I 256 -i 16384 -O ^has_journal -M /var -d debian-rootfs/var /dev/mapper/${VGNAME}-lvvar
 	sudo /sbin/tune2fs -c 4 -i 0 /dev/mapper/${VGNAME}-lvvar
 	sudo mkfs.ext4 -U $(homeid) -L /home -b 4096 -e remount-ro -E lazy_itable_init=0 -I 256 -i 16384 -O ^has_journal -M /home -d debian-rootfs/home /dev/mapper/${VGNAME}-lvhome
@@ -200,7 +200,7 @@ kernelclean:
 	rm -rf linux-$(KERNEL_MAJOR).$(KERNEL_MINOR) Image-$(KERNEL_MAJOR).$(KERNEL_MINOR) System.map-$(KERNEL_MAJOR).$(KERNEL_MINOR) config-$(KERNEL_MAJOR).$(KERNEL_MINOR) dtb-$(KERNEL_MAJOR).$(KERNEL_MINOR) Image-$(KERNEL_MAJOR).$(KERNEL_MINOR) linux-modules*.gz
 
 clean: kernelclean
-	rm -rf bl31.elf atf-source/build u-boot-default-env.txt idbloader.img u-boot.itb resize_gpt_disk resize_gpt_disk.aarch64 rockpi4.img.gz u-boot-env.txt mkenvimage mkimage u-boot-env.bin root.ext4 boot.ext2 linux-modules*.gz
+	rm -rf bl31.elf atf-source/build u-boot-default-env.txt idbloader.img u-boot.itb resize_gpt_disk resize_gpt_disk.aarch64 rockpi4.img.gz rockpi4.img u-boot-env.txt mkenvimage mkimage u-boot-env.bin root.ext4 boot.ext2 linux-modules*.gz
 	sudo rm -rf debian-bootfs debian-rootfs
 	make -C u-boot-source distclean
 
