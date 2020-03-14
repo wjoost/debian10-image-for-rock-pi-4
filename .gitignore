@@ -13,6 +13,7 @@ mkenvimage
 mkimage
 resize_gpt_disk
 resize_gpt_disk.aarch64
+rockpi4.img
 rockpi4.img.gz
 System.map-*
 u-boot-default-env.txt
