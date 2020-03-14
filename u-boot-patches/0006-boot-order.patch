@@ -51,7 +51,7 @@ diff -Naurp u-boot-source.orig/include/configs/rockchip-common.h u-boot-source.p
 +	"name=ubootenv,start=4064K,size=32K,uuid=${uuid_gpt_ubootenv};" \
 +	"name=loader2,start=8MB,size=4MB,uuid=$${uuid_gpt_loader2};" \
 +	"name=boot,size=12M,size=128M,bootable,uuid=${uuid_gpt_boot};" \
-+	"name=lvm,start=140M,size=-,uuid=${uuid_gpt_lvm}"
++	"name=lvm,start=140M,size=-,uuid=${uuid_gpt_lvm};\0"
  
  #endif
  
