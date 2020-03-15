@@ -81,9 +81,17 @@ broadcom-firmware:
 	mkdir broadcom-firmware-tmp
 	cd broadcom-firmware-tmp && ar x ../broadcom-wifibt-firmware.deb data.tar.xz && tar -x -J --no-same-owner --no-same-permissions -f data.tar.xz && rm data.tar.xz && cd .. && mv broadcom-firmware-tmp broadcom-firmware
 
-debian-rootfs: configure-debian.sh resize_gpt_disk.aarch64 brcm_patchram_plus broadcom-firmware
+si2168-firmware:
+	rm -rf si2168-firmware-tmp
+	mkdir si2168-firmware-tmp
+	curl -L -o si2168-firmware-tmp/dvb-demod-si2168-02.fw  'https://github.com/OpenELEC/dvb-firmware/raw/master/firmware/dvb-demod-si2168-02.fw'
+	curl -L -o si2168-firmware-tmp/dvb-demod-si2168-a20-01.fw 'https://github.com/OpenELEC/dvb-firmware/raw/master/firmware/dvb-demod-si2168-a20-01.fw'
+	curl -L -o si2168-firmware-tmp/dvb-demod-si2168-b40-01.fw 'https://github.com/OpenELEC/dvb-firmware/raw/master/firmware/dvb-demod-si2168-b40-01.fw'
+	mv si2168-firmware-tmp si2168-firmware
+
+debian-rootfs: configure-debian.sh resize_gpt_disk.aarch64 brcm_patchram_plus broadcom-firmware si2168-firmware
 	sudo rm -rf debian-rootfs
-	mkdir -m 0755 debian-rootfs debian-rootfs/lib debian-rootfs/lib/firmware debian-rootfs/lib/brcm debian-rootfs/etc debian-rootfs/etc/udev debian-rootfs/etc/udev/rules.d
+	sudo mkdir -m 0755 debian-rootfs debian-rootfs/lib debian-rootfs/lib/firmware debian-rootfs/lib/firmware/brcm debian-rootfs/etc debian-rootfs/etc/udev debian-rootfs/etc/udev/rules.d
 	DEBIAN_FRONTEND=noninteractive sudo --preserve-env=DEBIAN_FRONTEND qemu-debootstrap --arch=arm64 --keyring /usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase --exclude=debfoster,exim4-base,exim4-config,exim4-daemon-light --components main,non-free --include=openssh-server,u-boot-tools,parted,kpartx,initramfs-tools,mmc-utils,cron,curl,nscd,ssh,usbutils,vlan,wget,xz-utils,bzip2,systemd,init,init-system-helpers,iputils-ping,ca-certificates,dc,file,htop,less,openssl,vim-tiny,man-db,locales,keyboard-configuration,fake-hwclock,kbd,lvm2,make,bison,flex,libssl-dev,bc,pkg-config,patch,apt-transport-https,dbus,netbase,rfkill,dialog,apt-utils,ethtool,tcpdump,lsb-base,lsb-release,gcc,libncurses-dev,strace,pciutils,screen,lvm2,bluetooth,wpasupplicant,wireless-tools,crda,wireless-regdb,mtd-utils buster debian-rootfs ${mirror}
 	sudo cp configure-debian.sh debian-rootfs/
 	sudo cp resize_gpt_disk.aarch64 debian-rootfs/usr/local/sbin/resize_gpt_disk
@@ -92,17 +100,19 @@ debian-rootfs: configure-debian.sh resize_gpt_disk.aarch64 brcm_patchram_plus br
 	sudo chmod 0755 debian-rootfs/usr/local/sbin/brcm_patchram_plus
 	sudo chroot debian-rootfs /configure-debian.sh
 	sudo rm debian-rootfs/configure-debian.sh
-	sudo cp broadcom-firmware/system/etc/firmware/BCM4345C5.hcd debian-rootfs/lib/brcm/
-	sudo cp broadcom-firmware/system/etc/firmware/fw_bcm43456c5_ag.bin debian-rootfs/lib/brcm/brcmfmac43456-sdio.bin
-	sudo cp broadcom-firmware/system/etc/firmware/nvram_ap6256.txt debian-rootfs/lib/brcm/brcmfmac43456-sdio.radxa,rockpi4.txt
-	sudo chmod 0644 debian-rootfs/lib/brcm/*
+	sudo cp broadcom-firmware/system/etc/firmware/BCM4345C5.hcd debian-rootfs/lib/firmware/brcm/
+	sudo cp broadcom-firmware/system/etc/firmware/fw_bcm43456c5_ag.bin debian-rootfs/lib/firmware/brcm/brcmfmac43456-sdio.bin
+	sudo cp broadcom-firmware/system/etc/firmware/nvram_ap6256.txt debian-rootfs/lib/firmware/brcm/brcmfmac43456-sdio.radxa,rockpi4.txt
+	sudo cp si2168-firmware/dvb-demod-si2168-02.fw si2168-firmware/dvb-demod-si2168-a20-01.fw si2168-firmware/dvb-demod-si2168-b40-01.fw debian-rootfs/lib/firmware/
+	sudo chmod 0644 debian-rootfs/lib/firmware/brcm/* debian-rootfs/lib/firmware/*.fw
 
 rockpi4.img.gz: debian-rootfs resize_gpt_disk Image-$(KERNEL_MAJOR).$(KERNEL_MINOR) u-boot.itb partitions.txt
 	/sbin/losetup -l|awk '/rockpi4.img/ { print $$1 }' | while read lodevice; do sudo /sbin/kpartx -d $${lodevice}; sudo /sbin/losetup -d $${lodevice}; done
 	rm -f rockpi4.img rockpi4.img.gz
 	sudo rm -rf debian-rootfs/lib/modules
 	sudo mkdir -m 0755 debian-rootfs/lib/modules
-	sudo tar -C debian-rootfs/lib/modules --owner=root:0 --group=root:0 -x -f linux-modules-$(KERNEL_MAJOR).$(KERNEL_MINOR).tar.gz
+	sudo tar -C debian-rootfs/lib/modules --no-same-owner -x -f linux-modules-$(KERNEL_MAJOR).$(KERNEL_MINOR).tar.gz
+	sudo chown -R 0:0 debian-rootfs/lib/modules/$(KERNEL_MAJOR).$(KERNEL_MINOR)
 	fallocate -l 1073741824 rockpi4.img
 	/sbin/sfdisk --no-reread --no-tell-kernel rockpi4.img < partitions.txt
 	./resize_gpt_disk rockpi4.img
@@ -114,7 +124,7 @@ rockpi4.img.gz: debian-rootfs resize_gpt_disk Image-$(KERNEL_MAJOR).$(KERNEL_MIN
 	/sbin/sfdisk -d rockpi4.img|awk '/"loader2"/ { print "uuid_gpt_loader2=" substr($$8,6,36) }' >> u-boot-env.txt
 	/sbin/sfdisk -d rockpi4.img|awk '/"boot"/ { print "uuid_gpt_boot=" substr($$8,6,36) }' >> u-boot-env.txt
 	/sbin/sfdisk -d rockpi4.img|awk '/"lvm"/ { print "uuid_gpt_lvm=" substr($$8,6,36) }' >> u-boot-env.txt
-	echo "boot_targets=usb mmc1 mmc0" >> u-boot-env.txt
+	echo "boot_targets=usb0 mmc1 mmc0" >> u-boot-env.txt
 	rm -f u-boot-env.bin
 	sort -u < u-boot-env.txt | ./mkenvimage -s 32768 -o u-boot-env.bin
 	dd if=idbloader.img of=rockpi4.img obs=512 seek=64 conv=notrunc,sparse
@@ -144,8 +154,7 @@ rockpi4.img.gz: debian-rootfs resize_gpt_disk Image-$(KERNEL_MAJOR).$(KERNEL_MIN
 	sudo mv debian-rootfs/boot/* debian-bootfs
 	sudo ln -sf uInitrd-$(KERNEL_MAJOR).$(KERNEL_MINOR) debian-bootfs/uInitrd
 	sudo rm -f debian-rootfs/etc/initramfs-tools/conf.d/readwrite debian-rootfs/etc/initramfs-tools/hooks/resize-hook.sh debian-rootfs/etc/initramfs-tools/scripts/local-premount/resize-boot.sh debian-rootfs//etc/initramfs-tools/scripts/init-bottom/create-machine-id.sh
-	sudo bash -c "echo '# Linux cmdline'" > debian-bootfs/boot.cmd
-	#sudo bash -c "echo 'setenv bootargs \"console=ttyS2,1500000n81 console=tty0 consoleblank=0\"' >> debian-bootfs/boot.cmd"
+	sudo bash -c "echo '# Linux cmdline' > debian-bootfs/boot.cmd"
 	sudo bash -c "echo 'setenv bootargs \"console=ttyS2,1500000n81\"' >> debian-bootfs/boot.cmd"
 	sudo bash -c "echo '' >> debian-bootfs/boot.cmd"
 	sudo bash -c "echo '# Load FTD' >> debian-bootfs/boot.cmd"
