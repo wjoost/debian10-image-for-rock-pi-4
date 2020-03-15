@@ -24,3 +24,4 @@ u-boot-source
 broadcom-firmware
 broadcom-wifibt-firmware.deb
 brcm_patchram_plus
+si2168-firmware
