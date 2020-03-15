@@ -80,9 +80,6 @@ echo 'options r8188eu rtw_power_mgnt=0 rtw_enusbss=0 rtw_ips_mode=1' > /etc/modp
 echo 'options r8192cu rtw_power_mgnt=0 rtw_enusbss=0' > /etc/modprobe.d/8192cu.conf
 echo 'options brcmfmac roamoff=1' > /etc/modprobe.d/brcmfmac.conf
 chmod 0644 /etc/modprobe.d/8188eu.conf
-for map in /boot/System.map-*; do
-	depmod -a -F ${map} ${map#*-}
-done
 
 # Country code for WLAN
 sed -i -e '/^REGDOMAIN=/ c\
