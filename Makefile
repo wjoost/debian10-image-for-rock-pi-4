@@ -8,6 +8,7 @@ PARALLEL=3
 MIRROR="http://mirror.wtnet.de/debian/"
 #MIRROR="http://debian.mirror.iphh.net/debian/"
 VGNAME?=vgsystem
+BRCMFIRMWAREURL="https://github.com/radxa/apt/raw/gh-pages/stretch/pool/main/b/broadcom-wifibt-firmware/broadcom-wifibt-firmware_0.5_all.deb"
 
 all: rockpi4.img.gz
 atf-source:
@@ -71,15 +72,30 @@ resize_gpt_disk: resize_gpt_disk.c
 resize_gpt_disk.aarch64: resize_gpt_disk.c
 	$(CROSS_COMPILE)gcc -Wall -O2 -pedantic -s -o resize_gpt_disk.aarch64 resize_gpt_disk.c
 
-debian-rootfs: configure-debian.sh resize_gpt_disk.aarch64
+brcm_patchram_plus: brcm_patchram_plus.c
+	$(CROSS_COMPILE)gcc -Wall -O2 -pedantic -s -o brcm_patchram_plus brcm_patchram_plus.c
+
+broadcom-firmware:
+	rm -rf broadcom-firmware broadcom-firmware-tmp
+	test -e broadcom-wifibt-firmware.deb || curl -L -o broadcom-wifibt-firmware.deb "$(BRCMFIRMWAREURL)"
+	mkdir broadcom-firmware-tmp
+	cd broadcom-firmware-tmp && ar x ../broadcom-wifibt-firmware.deb data.tar.xz && tar -x -J --no-same-owner --no-same-permissions -f data.tar.xz && rm data.tar.xz && cd .. && mv broadcom-firmware-tmp broadcom-firmware
+
+debian-rootfs: configure-debian.sh resize_gpt_disk.aarch64 brcm_patchram_plus broadcom-firmware
 	sudo rm -rf debian-rootfs
-	mkdir -m 0755 debian-rootfs
-	DEBIAN_FRONTEND=noninteractive sudo --preserve-env=DEBIAN_FRONTEND qemu-debootstrap --arch=arm64 --keyring /usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase --exclude=debfoster,exim4-base,exim4-config,exim4-daemon-light --components main,non-free --include=openssh-server,u-boot-tools,parted,kpartx,initramfs-tools,mmc-utils,cron,curl,nscd,ssh,usbutils,vlan,wget,xz-utils,bzip2,systemd,init,init-system-helpers,iputils-ping,ca-certificates,dc,file,htop,less,openssl,vim-tiny,man-db,locales,keyboard-configuration,fake-hwclock,kbd,lvm2,make,bison,flex,libssl-dev,bc,pkg-config,patch,apt-transport-https,dbus,dialog,apt-utils,ethtool,tcpdump,lsb-base,lsb-release,gcc,libncurses-dev,strace,pciutils,screen,lvm2,bluetooth,wpasupplicant,wireless-tools buster debian-rootfs ${mirror}
+	mkdir -m 0755 debian-rootfs debian-rootfs/lib debian-rootfs/lib/firmware debian-rootfs/lib/brcm debian-rootfs/etc debian-rootfs/etc/udev debian-rootfs/etc/udev/rules.d
+	DEBIAN_FRONTEND=noninteractive sudo --preserve-env=DEBIAN_FRONTEND qemu-debootstrap --arch=arm64 --keyring /usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase --exclude=debfoster,exim4-base,exim4-config,exim4-daemon-light --components main,non-free --include=openssh-server,u-boot-tools,parted,kpartx,initramfs-tools,mmc-utils,cron,curl,nscd,ssh,usbutils,vlan,wget,xz-utils,bzip2,systemd,init,init-system-helpers,iputils-ping,ca-certificates,dc,file,htop,less,openssl,vim-tiny,man-db,locales,keyboard-configuration,fake-hwclock,kbd,lvm2,make,bison,flex,libssl-dev,bc,pkg-config,patch,apt-transport-https,dbus,netbase,rfkill,dialog,apt-utils,ethtool,tcpdump,lsb-base,lsb-release,gcc,libncurses-dev,strace,pciutils,screen,lvm2,bluetooth,wpasupplicant,wireless-tools,crda,wireless-regdb,mtd-utils buster debian-rootfs ${mirror}
 	sudo cp configure-debian.sh debian-rootfs/
 	sudo cp resize_gpt_disk.aarch64 debian-rootfs/usr/local/sbin/resize_gpt_disk
+	sudo cp brcm_patchram_plus debian-rootfs/usr/local/sbin
 	sudo chmod 0744 debian-rootfs/configure-debian.sh debian-rootfs/usr/local/sbin/resize_gpt_disk
+	sudo chmod 0755 debian-rootfs/usr/local/sbin/brcm_patchram_plus
 	sudo chroot debian-rootfs /configure-debian.sh
 	sudo rm debian-rootfs/configure-debian.sh
+	sudo cp broadcom-firmware/system/etc/firmware/BCM4345C5.hcd debian-rootfs/lib/brcm/
+	sudo cp broadcom-firmware/system/etc/firmware/fw_bcm43456c5_ag.bin debian-rootfs/lib/brcm/brcmfmac43456-sdio.bin
+	sudo cp broadcom-firmware/system/etc/firmware/nvram_ap6256.txt debian-rootfs/lib/brcm/brcmfmac43456-sdio.radxa,rockpi4.txt
+	sudo chmod 0644 debian-rootfs/lib/brcm/*
 
 rockpi4.img.gz: debian-rootfs resize_gpt_disk Image-$(KERNEL_MAJOR).$(KERNEL_MINOR) u-boot.itb partitions.txt
 	/sbin/losetup -l|awk '/rockpi4.img/ { print $$1 }' | while read lodevice; do sudo /sbin/kpartx -d $${lodevice}; sudo /sbin/losetup -d $${lodevice}; done
@@ -146,7 +162,7 @@ rockpi4.img.gz: debian-rootfs resize_gpt_disk Image-$(KERNEL_MAJOR).$(KERNEL_MIN
 	sudo bash -c "echo '#fdt set /spi@ff1d0000/spi-flash@0 status okay' >> debian-bootfs/boot.cmd"
 	sudo bash -c "echo '' >> debian-bootfs/boot.cmd"
 	sudo bash -c "echo '# Enable bluetooth' >> debian-bootfs/boot.cmd"
-	sudo bash -c "echo '#fdt set /serial@ff18000 status ok' >> debian-bootfs/boot.cmd"
+	sudo bash -c "echo '#fdt set /serial@ff180000 status ok' >> debian-bootfs/boot.cmd"
 	sudo bash -c "echo '' >> debian-bootfs/boot.cmd"
 	sudo bash -c "echo '# Enable wlan' >> debian-bootfs/boot.cmd"
 	sudo bash -c "echo '#fdt set /dwmmc@fe310000 status ok' >> debian-bootfs/boot.cmd"
@@ -200,9 +216,9 @@ kernelclean:
 	rm -rf linux-$(KERNEL_MAJOR).$(KERNEL_MINOR) Image-$(KERNEL_MAJOR).$(KERNEL_MINOR) System.map-$(KERNEL_MAJOR).$(KERNEL_MINOR) config-$(KERNEL_MAJOR).$(KERNEL_MINOR) dtb-$(KERNEL_MAJOR).$(KERNEL_MINOR) Image-$(KERNEL_MAJOR).$(KERNEL_MINOR) linux-modules*.gz
 
 clean: kernelclean
-	rm -rf bl31.elf atf-source/build u-boot-default-env.txt idbloader.img u-boot.itb resize_gpt_disk resize_gpt_disk.aarch64 rockpi4.img.gz rockpi4.img u-boot-env.txt mkenvimage mkimage u-boot-env.bin root.ext4 boot.ext2 linux-modules*.gz
+	rm -rf bl31.elf atf-source/build u-boot-default-env.txt idbloader.img u-boot.itb resize_gpt_disk resize_gpt_disk.aarch64 rockpi4.img.gz rockpi4.img u-boot-env.txt mkenvimage mkimage u-boot-env.bin root.ext4 boot.ext2 linux-modules*.gz broadcom-firmware brcm_patchram_plus
 	sudo rm -rf debian-bootfs debian-rootfs
-	make -C u-boot-source distclean
+	test -d u-boot-source && make -C u-boot-source distclean || true
 
 distclean: clean
 	rm -rf atf-source u-boot-source linux-*.xz

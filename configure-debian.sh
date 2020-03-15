@@ -77,7 +77,40 @@ XKBLAYOUT="de"' /etc/default/keyboard
 
 # Enhance WLAN stability
 echo 'options r8188eu rtw_power_mgnt=0 rtw_enusbss=0 rtw_ips_mode=1' > /etc/modprobe.d/8188eu.conf
+echo 'options r8192cu rtw_power_mgnt=0 rtw_enusbss=0' > /etc/modprobe.d/8192cu.conf
+echo 'options brcmfmac roamoff=1' > /etc/modprobe.d/brcmfmac.conf
 chmod 0644 /etc/modprobe.d/8188eu.conf
+for map in /boot/System.map-*; do
+	depmod -a -F ${map} ${map#*-}
+done
+
+# Country code for WLAN
+sed -i -e '/^REGDOMAIN=/ c\
+REGDOMAIN=DE
+' /etc/default/crda
+
+# Configure wpa supplicant
+cat > /etc/wpa_supplicant/wpa_supplicant-wlan0.conf << EOF
+country=DE
+bgscan=""
+
+# Any unencrypted network
+#network={
+#	key_mgmt=NONE
+#}
+
+# Sample encrypted network with WPA-PSK
+#network={
+#	ssid="example"
+#	scan_ssid=1
+#	psk="VerySecret"
+#}
+EOF
+chmod 0600 /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
+
+# Start wpa supplicant via udev
+echo 'ACTION=="add", SUBSYSTEM=="net", KERNEL=="wlan*", TAG+="systemd", ENV{SYSTEMD_WANTS}="wpa_supplicant@\$name.service"' > /etc/udev/rules.d/90-wpa_supplicant.rules
+chmod 0644 /etc/udev/rules.d/90-wpa_supplicant.rules
 
 # No persistent nscd cache
 sed -i -E -e 's/(^\s*persistent\s*\w*\s*)(yes$)/\1no/g' /etc/nscd.conf
@@ -228,6 +261,27 @@ UseDomains=yes
 [IPV6ACCEPTRA]
 UseDNS=no
 EOF
+
+cat > /etc/systemd/network/wlan0.network << EOF
+[Match]
+Name=wlan0
+
+[Network]
+DHCP=ipv4
+LLMNR=no
+LLDP=no
+EmitLLDP=no
+IPv6PrivacyExtensions=yes
+IPv6AcceptRA=yes
+
+[DHCP]
+SendHostname=no
+UseDomains=yes
+
+[IPV6ACCEPTRA]
+UseDNS=no
+EOF
+
 /bin/systemctl enable systemd-networkd.service
 
 # /etc/hosts
@@ -307,6 +361,26 @@ chmod 744 /usr/local/sbin/create-boot-scr.sh /usr/local/sbin/create-uinitrd.sh /
 # No resume
 echo RESUME=none > /etc/initramfs-tools/conf.d/resume
 chmod 0644 /etc/initramfs-tools/conf.d/resume
+
+# Bluetooth
+echo 'ACTION=="add", SUBSYSTEM=="tty", KERNEL=="ttyS0", TAG+="systemd", GROUP="bluetooth", ENV{SYSTEMD_WANTS}="brcm_patch.service"' > /etc/udev/rules.d/90-bluetooth.rules
+cat > /etc/systemd/system/brcm_patch.service << EOF
+[Unit]
+Description="Broadcom bluetooth firmware loader"
+BindsTo=sys-devices-platform-ff180000.serial-tty-ttyS0.device
+After=sys-devices-platform-ff180000.serial-tty-ttyS0.device
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/brcm_patchram_plus --enable_hci --no2bytes --use_baudrate_for_download --tosleep 200000 --baudrate 1500000 --patchram /lib/firmware/brcm/BCM4345C5.hcd /dev/ttyS0
+Restart=on-failure
+RestartSec=2
+DynamicUser=true
+SupplementaryGroups=bluetooth
+
+[Install]
+EOF
+chmod 0644 /etc/systemd/system/brcm_patch.service /etc/udev/rules.d/90-bluetooth.rules
 
 # Clean up run directory
 rm -rf /run /boot

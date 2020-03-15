@@ -11,16 +11,15 @@ Not finished yet. Known issues:
 
 Not implemented:
 
-* Bluetooth (wip)
-* WLAN (wip)
 * HDMI out (does not work reliable, might even break hw)
-* SATA
+* SATA (adapt kernel config when needed)
 
 Not checked:
 
 * Audio
 * GPIO / SPI / I2C
 * PCIe seems to work
+* Bluetooth (wip)
 
 ## Build
 
@@ -39,12 +38,14 @@ want to boot from sd, change the setting CONFIG_SYS_MMC_ENV_DEV to 1 in
 include/configs/evb_rk3399.h and update /etc/fw_env.config in
 configure_debian.sh.
 
+## Rescue USB
+
 The image can be copied to an USB stick as well. The bootloader has been
 configured to look for a linux system on an usb stick first. This way a
 non-working system can be started from USB as long as the bootloader is still
-intact. However, you should build an extra image for USB (remove rockpi4.img.gz
-and call make again) for an USB stick. Otherwise you will get duplicate unique
-IDs.
+intact. However, you should build an extra image for USB.
+Remove rockpi4.img.gz and call `make VGNAME=vgusbrescue rockpi4.img.gz`.
+Otherwise, you get duplicate uuids and volume group names.
 
 ## Login
 
@@ -85,3 +86,9 @@ fdt apply ${ramdisk_addr_r}
 Add these statements after the `fdt resize` command.
 After any change of /boot/boot.cmd, invoke _/usr/local/sbin/create-boot-scr.sh_
 to recreate /boot/boot.scr.
+
+## Network configuration
+
+Network configuration is done using systemd. See contents of directory
+_/etc/systemd/network_ and _man systemd.network_. WLAN credentials must be
+configured using _/etc/wpa_supplicant/wpa_supplicant-wlan0.conf_.

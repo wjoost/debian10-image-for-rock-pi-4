@@ -21,3 +21,6 @@ u-boot-env.bin
 u-boot-env.txt
 u-boot.itb
 u-boot-source
+broadcom-firmware
+broadcom-wifibt-firmware.deb
+brcm_patchram_plus
