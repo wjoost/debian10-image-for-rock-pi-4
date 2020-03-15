@@ -134,18 +134,18 @@ rockpi4.img.gz: debian-rootfs resize_gpt_disk Image-$(KERNEL_MAJOR).$(KERNEL_MIN
 	$(eval bootid := $(shell uuid -v 1 -F STR))
 	$(eval varid := $(shell uuid -v 1 -F STR))
 	$(eval homeid := $(shell uuid -v 1 -F STR))
-	sudo bash -c "echo '/dev/${VGNAME}/lvroot                      /               ext4     noatime                          1 1' > debian-rootfs/etc/fstab"
+	sudo bash -c "echo '/dev/$(VGNAME)/lvroot                      /               ext4     noatime                          1 1' > debian-rootfs/etc/fstab"
 	sudo bash -c "echo 'UUID=$(bootid) /boot           ext2     noatime                          1 2' >> debian-rootfs/etc/fstab"
-	sudo bash -c "echo '/dev/${VGNAME}/lvvar                       /var            ext4     noatime                          1 3' >> debian-rootfs/etc/fstab"
-	sudo bash -c "echo '/dev/${VGNAME}/lvhome                      /home           ext4     noatime                          1 4' >> debian-rootfs/etc/fstab"
+	sudo bash -c "echo '/dev/$(VGNAME)/lvvar                       /var            ext4     noatime                          1 3' >> debian-rootfs/etc/fstab"
+	sudo bash -c "echo '/dev/$(VGNAME)/lvhome                      /home           ext4     noatime                          1 4' >> debian-rootfs/etc/fstab"
 	sudo bash -c "echo 'tmpfs                                     /tmp            tmpfs    size=256M,mode=1777,nodev,nosuid 0 0' >> debian-rootfs/etc/fstab"
 	sudo bash -c "echo '/tmp                                      /var/tmp        none     bind                             0 0' >> debian-rootfs/etc/fstab"
 	sudo chmod 0644 debian-rootfs/etc/fstab
-	sudo bash -c "echo ROOT=/dev/${VGNAME}/lvroot > debian-rootfs/etc/initramfs-tools/conf.d/root"
+	sudo bash -c "echo ROOT=/dev/$(VGNAME)/lvroot > debian-rootfs/etc/initramfs-tools/conf.d/root"
 	sudo bash -c 'echo readonly=n > debian-rootfs/etc/initramfs-tools/conf.d/readwrite'
 	sudo cp resize-hook.sh debian-rootfs/etc/initramfs-tools/hooks/
 	sudo cp resize-boot.sh debian-rootfs/etc/initramfs-tools/scripts/local-premount/
-	sudo sed -i -e 's/vgsystem/${VGNAME}/g' debian-rootfs/etc/initramfs-tools/scripts/local-premount/resize-boot.sh
+	sudo sed -i -e 's/vgsystem/$(VGNAME)/g' debian-rootfs/etc/initramfs-tools/scripts/local-premount/resize-boot.sh
 	sudo cp create-machine-id.sh debian-rootfs/etc/initramfs-tools/scripts/init-bottom/
 	test -e debian-rootfs/usr/bin/qemu-aarch64-static || sudo cp -p /usr/bin/qemu-aarch64-static debian-rootfs/usr/bin/
 	sudo chroot debian-rootfs /usr/sbin/mkinitramfs -r UUID=$(rootid) -o /boot/initrd.img-$(KERNEL_MAJOR).$(KERNEL_MINOR) $(KERNEL_MAJOR).$(KERNEL_MINOR)
@@ -198,26 +198,26 @@ rockpi4.img.gz: debian-rootfs resize_gpt_disk Image-$(KERNEL_MAJOR).$(KERNEL_MIN
       	lodevice=$$(/sbin/losetup -l|awk '/rockpi4.img/ { print substr($$1,6) }'); \
 	sudo /sbin/kpartx -s -a /dev/$${lodevice}; \
 	sudo pvcreate /dev/mapper/$${lodevice}p5; \
-	sudo vgcreate -s 64M ${VGNAME} /dev/mapper/$${lodevice}p5; \
+	sudo vgcreate -s 64M $(VGNAME) /dev/mapper/$${lodevice}p5; \
 	sudo mkfs.ext2 -U $(bootid) -L /boot -b 4096 -e remount-ro -I 256 -N 1024 -O ^resize_inode -M /boot -d debian-bootfs /dev/mapper/$${lodevice}p4; \
 	sudo /sbin/tune2fs -c 4 -i 0 /dev/mapper/$${lodevice}p4
 	sudo rm -rf debian-bootfs
-	sudo lvcreate -n lvroot -L 512M ${VGNAME}
-	sudo lvcreate -n lvhome -L 64M ${VGNAME}
-	sudo lvcreate -n lvvar  -L 256M ${VGNAME}
-	sudo mkfs.ext4 -U $(varid) -L /var -b 4096 -e remount-ro -E lazy_itable_init=0 -I 256 -i 16384 -O ^has_journal -M /var -d debian-rootfs/var /dev/mapper/${VGNAME}-lvvar
-	sudo /sbin/tune2fs -c 4 -i 0 /dev/mapper/${VGNAME}-lvvar
-	sudo mkfs.ext4 -U $(homeid) -L /home -b 4096 -e remount-ro -E lazy_itable_init=0 -I 256 -i 16384 -O ^has_journal -M /home -d debian-rootfs/home /dev/mapper/${VGNAME}-lvhome
-	sudo /sbin/tune2fs -c 4 -i 0 /dev/mapper/${VGNAME}-lvhome
+	sudo lvcreate -n lvroot -L 512M $(VGNAME)
+	sudo lvcreate -n lvhome -L 64M $(VGNAME)
+	sudo lvcreate -n lvvar  -L 256M $(VGNAME)
+	sudo mkfs.ext4 -U $(varid) -L /var -b 4096 -e remount-ro -E lazy_itable_init=0 -I 256 -i 16384 -O ^has_journal -M /var -d debian-rootfs/var /dev/mapper/$(VGNAME)-lvvar
+	sudo /sbin/tune2fs -c 4 -i 0 /dev/mapper/$(VGNAME)-lvvar
+	sudo mkfs.ext4 -U $(homeid) -L /home -b 4096 -e remount-ro -E lazy_itable_init=0 -I 256 -i 16384 -O ^has_journal -M /home -d debian-rootfs/home /dev/mapper/$(VGNAME)-lvhome
+	sudo /sbin/tune2fs -c 4 -i 0 /dev/mapper/$(VGNAME)-lvhome
 	sudo rm -rf debian-onlyroot
 	mkdir debian-onlyroot
 	sudo tar -C debian-rootfs -c -f - -S --exclude ./tmp --exclude ./var --exclude ./home --exclude ./boot .| sudo tar -C debian-onlyroot -x -f - -S
 	sudo mkdir -m0 debian-onlyroot/boot debian-onlyroot/tmp debian-onlyroot/home debian-onlyroot/var
 	sudo bash -c "date -u '+%Y-%m-%d %H:%M:%S' > debian-onlyroot/etc/fake-hwclock.data"
-	sudo mkfs.ext4 -U $(rootid) -L / -b 4096 -e remount-ro -E lazy_itable_init=0 -I 256 -i 16384 -O ^has_journal -M / -d debian-onlyroot /dev/mapper/${VGNAME}-lvroot
-	sudo /sbin/tune2fs -c 4 -i 0 /dev/mapper/${VGNAME}-lvroot
+	sudo mkfs.ext4 -U $(rootid) -L / -b 4096 -e remount-ro -E lazy_itable_init=0 -I 256 -i 16384 -O ^has_journal -M / -d debian-onlyroot /dev/mapper/$(VGNAME)-lvroot
+	sudo /sbin/tune2fs -c 4 -i 0 /dev/mapper/$(VGNAME)-lvroot
 	sudo rm -rf debian-onlyroot
-	sudo /sbin/vgchange -an ${VGNAME}
+	sudo /sbin/vgchange -an $(VGNAME)
 	set -e; lodevice=$$(/sbin/losetup -l|awk '/rockpi4.img/ { print substr($$1,6) }'); sudo /sbin/kpartx -d /dev/$${lodevice}; sudo /sbin/losetup -d /dev/$${lodevice}
 	gzip -9 rockpi4.img
 
