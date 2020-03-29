@@ -16,12 +16,23 @@ esac
 . /scripts/local
 
 eval $(/sbin/pvs --noheadings -o pv_name --nameprefixes --select vg_name=vgsystem)
+retry=8
+while [ -z "${LVM2_PV_NAME}" -a ${retry} -gt 0 ]; do
+	sleep 1
+	retry=$((retry - 1))
+	eval $(/sbin/pvs --noheadings -o pv_name --nameprefixes --select vg_name=vgsystem)
+done
 
 if [ -z "${LVM2_PV_NAME}" ]; then
 	log_failure_msg "Cannot find pv of vgsystem"
 else
-	mmcdev="${LVM2_PV_NAME%p*}"
-	partno="${LVM2_PV_NAME#${mmcdev}p}"
+	if [ $(echo "${LVM2_PV_NAME}" | awk '{ print substr($0, 0, 8) }') = "/dev/sd" ]; then
+		mmcdev=$(echo "${LVM2_PV_NAME}" | awk '{ print substr($0, 0, 9) }')
+		partno="${LVM2_PV_NAME#${mmcdev}}"
+	elif [ $(echo "${LVM2_PV_NAME}" | awk '{ print substr($0, 0, 12) }') = "/dev/mmcblk" ]; then
+		mmcdev="${LVM2_PV_NAME%p*}"
+		partno="${LVM2_PV_NAME#${mmcdev}p}"
+	fi
 	if [ ! -b "${mmcdev}" ]; then
 		log_failure_msg "Cannot access block device with vgsystem."
 	else
