@@ -3,7 +3,7 @@ UBOOT_VERSION=v2020.01
 CROSS_COMPILE=aarch64-linux-gnu-
 M0_CROSS_COMPILE=arm-none-eabi-
 KERNEL_MAJOR=5.4
-KERNEL_MINOR=25
+KERNEL_MINOR=28
 PARALLEL=3
 MIRROR="http://mirror.wtnet.de/debian/"
 #MIRROR="http://debian.mirror.iphh.net/debian/"
@@ -95,8 +95,9 @@ debian-rootfs: configure-debian.sh resize_gpt_disk.aarch64 brcm_patchram_plus br
 	DEBIAN_FRONTEND=noninteractive sudo --preserve-env=DEBIAN_FRONTEND qemu-debootstrap --arch=arm64 --keyring /usr/share/keyrings/debian-archive-keyring.gpg --variant=minbase --exclude=debfoster,exim4-base,exim4-config,exim4-daemon-light --components main,non-free --include=openssh-server,u-boot-tools,parted,kpartx,initramfs-tools,mmc-utils,cron,curl,nscd,ssh,usbutils,vlan,wget,xz-utils,bzip2,systemd,init,init-system-helpers,iputils-ping,ca-certificates,dc,file,htop,less,openssl,vim-tiny,man-db,locales,keyboard-configuration,fake-hwclock,kbd,lvm2,make,bison,flex,libssl-dev,bc,pkg-config,patch,apt-transport-https,dbus,netbase,rfkill,dialog,apt-utils,ethtool,tcpdump,lsb-base,lsb-release,gcc,libncurses-dev,strace,pciutils,screen,lvm2,bluetooth,wpasupplicant,wireless-tools,crda,wireless-regdb,mtd-utils buster debian-rootfs ${mirror}
 	sudo cp configure-debian.sh debian-rootfs/
 	sudo cp resize_gpt_disk.aarch64 debian-rootfs/usr/local/sbin/resize_gpt_disk
-	sudo cp brcm_patchram_plus debian-rootfs/usr/local/sbin
-	sudo chmod 0744 debian-rootfs/configure-debian.sh debian-rootfs/usr/local/sbin/resize_gpt_disk
+	sudo cp brcm_patchram_plus write_protect_boot.sh debian-rootfs/usr/local/sbin
+	sudo cp write_protect_boot.service debian-rootfs/etc/systemd/system/
+	sudo chmod 0744 debian-rootfs/configure-debian.sh debian-rootfs/usr/local/sbin/resize_gpt_disk debian-rootfs/usr/local/sbin/write_protect_boot.sh
 	sudo chmod 0755 debian-rootfs/usr/local/sbin/brcm_patchram_plus
 	sudo chroot debian-rootfs /configure-debian.sh
 	sudo rm debian-rootfs/configure-debian.sh

@@ -379,6 +379,9 @@ SupplementaryGroups=bluetooth
 EOF
 chmod 0644 /etc/systemd/system/brcm_patch.service /etc/udev/rules.d/90-bluetooth.rules
 
+# Write protection for boot blocks
+systemctl enable write_protect_boot.service
+
 # Clean up run directory
 rm -rf /run /boot
 mkdir -m 0755 /run /boot

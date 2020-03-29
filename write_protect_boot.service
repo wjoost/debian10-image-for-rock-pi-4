@@ -1,0 +1,15 @@
+[Unit]
+Description=Write protect boot area
+DefaultDependencies=no
+Requires=boot.mount
+After=boot.mount
+Before=sysinit.target
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/write_protect_boot.sh
+
+[Install]
+WantedBy=sysinit.target
