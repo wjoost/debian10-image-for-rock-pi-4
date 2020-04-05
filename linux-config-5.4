@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/arm64 5.4.25 Kernel Configuration
+# Linux/arm64 5.4.30 Kernel Configuration
 #
 
 #
@@ -1761,7 +1761,10 @@ CONFIG_SERIAL_DEV_BUS=m
 # CONFIG_TTY_PRINTK is not set
 # CONFIG_HVC_DCC is not set
 # CONFIG_IPMI_HANDLER is not set
-# CONFIG_HW_RANDOM is not set
+CONFIG_HW_RANDOM=y
+# CONFIG_HW_RANDOM_TIMERIOMEM is not set
+# CONFIG_HW_RANDOM_CAVIUM is not set
+CONFIG_HW_RANDOM_ROCKCHIP=y
 # CONFIG_APPLICOM is not set
 # CONFIG_RAW_DRIVER is not set
 # CONFIG_TCG_TPM is not set
@@ -3060,6 +3063,7 @@ CONFIG_USB_SERIAL_PL2303=m
 # CONFIG_USB_HSIC_USB3503 is not set
 # CONFIG_USB_HSIC_USB4604 is not set
 # CONFIG_USB_LINK_LAYER_TEST is not set
+# CONFIG_USB_CHAOSKEY is not set
 
 #
 # USB Physical Layer drivers
