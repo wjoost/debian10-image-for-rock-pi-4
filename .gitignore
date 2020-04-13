@@ -1,5 +1,5 @@
-atf-source
-bl31.elf
+atf-source-*
+bl31-*.elf
 config-*
 debian-rootfs
 dtb-*

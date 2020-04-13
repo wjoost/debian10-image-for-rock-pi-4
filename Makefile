@@ -11,15 +11,15 @@ VGNAME?=vgsystem
 BRCMFIRMWAREURL="https://github.com/radxa/apt/raw/gh-pages/stretch/pool/main/b/broadcom-wifibt-firmware/broadcom-wifibt-firmware_0.5_all.deb"
 
 all: rockpi4.img.gz
-atf-source:
-	git clone -b $(ATF_VERSION) https://git.trustedfirmware.org/TF-A/trusted-firmware-a.git atf-source
-	sed -i -E -e 's/(^#define RK3399_BAUDRATE)(.)*$$/#define RK3399_BAUDRATE			1500000/' atf-source/plat/rockchip/rk3399/rk3399_def.h
-	set -e && for p in atf-patches/*.patch; do echo $${p}; patch -d atf-source -p1 -i ../$${p}; done
+atf-source-$(ATF_VERSION):
+	git clone -b $(ATF_VERSION) https://git.trustedfirmware.org/TF-A/trusted-firmware-a.git atf-source-$(ATF_VERSION)
+	sed -i -E -e 's/(^#define RK3399_BAUDRATE)(.)*$$/#define RK3399_BAUDRATE			1500000/' atf-source-$(ATF_VERSION)/plat/rockchip/rk3399/rk3399_def.h
+	set -e && for p in atf-$(ATF_VERSION)-patches/*.patch; do echo $${p}; patch -d atf-source-$(ATF_VERSION) -p1 -i ../$${p}; done
 
-bl31.elf: atf-source
-	make -C atf-source realclean
-	make -C atf-source CROSS_COMPILE=$(CROSS_COMPILE) M0_CROSS_COMPILE=$(M0_CROSS_COMPILE) DEBUG=0 PLAT=rk3399 bl31
-	cp atf-source/build/rk3399/release/bl31/bl31.elf . || cp atf-source/build/rk3399/debug/bl31/bl31.elf .
+bl31-$(ATF_VERSION).elf: atf-source-$(ATF_VERSION)
+	make -C atf-source-$(ATF_VERSION) realclean
+	make -C atf-source-$(ATF_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) M0_CROSS_COMPILE=$(M0_CROSS_COMPILE) DEBUG=0 PLAT=rk3399 bl31
+	cp atf-source-$(ATF_VERSION)/build/rk3399/release/bl31/bl31.elf bl31-$(ATF_VERSION).elf || cp atf-source/build/rk3399/debug/bl31/bl31.elf bl31-$(ATF_VERSION).elf
 
 u-boot-source-$(UBOOT_VERSION): u-boot-extra-config
 	rm -rf u-boot-source-$(UBOOT_VERSION)
@@ -28,10 +28,10 @@ u-boot-source-$(UBOOT_VERSION): u-boot-extra-config
 	set -e && for p in u-boot-$(UBOOT_VERSION)-patches/*.patch; do echo $${p}; patch -d u-boot-source-$(UBOOT_VERSION) -p1 -i ../$${p}; done
 	cat u-boot-extra-config >> u-boot-source-$(UBOOT_VERSION)/configs/rock-pi-4-rk3399_defconfig
 
-u-boot.itb: u-boot-source-$(UBOOT_VERSION) bl31.elf
+u-boot.itb: u-boot-source-$(UBOOT_VERSION) bl31-$(ATF_VERSION).elf
 	make -C u-boot-source-$(UBOOT_VERSION) distclean
-	make -C u-boot-source-$(UBOOT_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) BL31=$(CURDIR)/bl31.elf rock-pi-4-rk3399_defconfig
-	make -C u-boot-source-$(UBOOT_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) BL31=$(CURDIR)/bl31.elf
+	make -C u-boot-source-$(UBOOT_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) BL31=$(CURDIR)/bl31-$(ATF_VERSION).elf rock-pi-4-rk3399_defconfig
+	make -C u-boot-source-$(UBOOT_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) BL31=$(CURDIR)/bl31-$(ATF_VERSION).elf
 	cp u-boot-source-$(UBOOT_VERSION)/env/common.o u-boot-source-$(UBOOT_VERSION)/env_common.o
 	$(CROSS_COMPILE)objcopy -O binary -j ".rodata.default_environment" u-boot-source-$(UBOOT_VERSION)/env_common.o
 	tr '\0' '\n' < u-boot-source-$(UBOOT_VERSION)/env_common.o | sort -u > u-boot-default-env.txt
@@ -226,11 +226,11 @@ kernelclean:
 	rm -rf linux-$(KERNEL_MAJOR).$(KERNEL_MINOR) Image-$(KERNEL_MAJOR).$(KERNEL_MINOR) System.map-$(KERNEL_MAJOR).$(KERNEL_MINOR) config-$(KERNEL_MAJOR).$(KERNEL_MINOR) dtb-$(KERNEL_MAJOR).$(KERNEL_MINOR) Image-$(KERNEL_MAJOR).$(KERNEL_MINOR) linux-modules*.gz
 
 clean: kernelclean
-	rm -rf bl31.elf atf-source/build u-boot-default-env.txt idbloader.img u-boot.itb resize_gpt_disk resize_gpt_disk.aarch64 rockpi4.img.gz rockpi4.img u-boot-env.txt mkenvimage mkimage u-boot-env.bin root.ext4 boot.ext2 linux-modules*.gz broadcom-firmware brcm_patchram_plus
+	rm -rf bl31-$(ATF_VERSION).elf atf-source-$(ATF_VERSION)/build u-boot-default-env.txt idbloader.img u-boot.itb resize_gpt_disk resize_gpt_disk.aarch64 rockpi4.img.gz rockpi4.img u-boot-env.txt mkenvimage mkimage u-boot-env.bin root.ext4 boot.ext2 linux-modules*.gz broadcom-firmware brcm_patchram_plus
 	sudo rm -rf debian-bootfs debian-rootfs
 	test -d u-boot-source-$(UBOOT_VERSION) && make -C u-boot-source-$(UBOOT_VERSION) distclean || true
 
 distclean: clean
-	rm -rf atf-source u-boot-source-$(UBOOT_VERSION) linux-*.xz
+	rm -rf atf-source-$(ATF_VERSION) u-boot-source-$(UBOOT_VERSION) linux-*.xz
 
 .PHONY: clean distclean kernelclean
