@@ -3,7 +3,7 @@ UBOOT_VERSION=v2020.01
 CROSS_COMPILE=aarch64-linux-gnu-
 M0_CROSS_COMPILE=arm-none-eabi-
 KERNEL_MAJOR=5.4
-KERNEL_MINOR=30
+KERNEL_MINOR=32
 PARALLEL=5
 MIRROR="http://mirror.wtnet.de/debian/"
 #MIRROR="http://debian.mirror.iphh.net/debian/"
@@ -21,22 +21,22 @@ bl31.elf: atf-source
 	make -C atf-source CROSS_COMPILE=$(CROSS_COMPILE) M0_CROSS_COMPILE=$(M0_CROSS_COMPILE) DEBUG=0 PLAT=rk3399 bl31
 	cp atf-source/build/rk3399/release/bl31/bl31.elf . || cp atf-source/build/rk3399/debug/bl31/bl31.elf .
 
-u-boot-source: u-boot-extra-config
-	rm -rf u-boot-source
-	git clone -b $(UBOOT_VERSION) https://gitlab.denx.de/u-boot/u-boot.git/ u-boot-source
-	sed -i -e '/i2s1/,+5d' -e '/&hdmi / a\        ddc-i2c-bus = <&i2c3>;' u-boot-source/arch/arm/dts/rk3399-rock-pi-4.dts
-	set -e && for p in u-boot-patches/*.patch; do echo $${p}; patch -d u-boot-source -p1 -i ../$${p}; done
-	cat u-boot-extra-config >> u-boot-source/configs/rock-pi-4-rk3399_defconfig
+u-boot-source-$(UBOOT_VERSION): u-boot-extra-config
+	rm -rf u-boot-source-$(UBOOT_VERSION)
+	git clone -b $(UBOOT_VERSION) https://gitlab.denx.de/u-boot/u-boot.git/ u-boot-source-$(UBOOT_VERSION)
+	sed -i -e '/i2s1/,+5d' -e '/&hdmi / a\        ddc-i2c-bus = <&i2c3>;' u-boot-source-$(UBOOT_VERSION)/arch/arm/dts/rk3399-rock-pi-4.dts
+	set -e && for p in u-boot-$(UBOOT_VERSION)-patches/*.patch; do echo $${p}; patch -d u-boot-source-$(UBOOT_VERSION) -p1 -i ../$${p}; done
+	cat u-boot-extra-config >> u-boot-source-$(UBOOT_VERSION)/configs/rock-pi-4-rk3399_defconfig
 
-u-boot.itb: u-boot-source bl31.elf
-	make -C u-boot-source distclean
-	make -C u-boot-source CROSS_COMPILE=$(CROSS_COMPILE) BL31=$(CURDIR)/bl31.elf rock-pi-4-rk3399_defconfig
-	make -C u-boot-source CROSS_COMPILE=$(CROSS_COMPILE) BL31=$(CURDIR)/bl31.elf
-	cp u-boot-source/env/common.o u-boot-source/env_common.o
-	$(CROSS_COMPILE)objcopy -O binary -j ".rodata.default_environment" u-boot-source/env_common.o
-	tr '\0' '\n' < u-boot-source/env_common.o | sort -u > u-boot-default-env.txt
-	rm u-boot-source/env_common.o
-	cp u-boot-source/idbloader.img u-boot-source/u-boot.itb u-boot-source/tools/mkenvimage u-boot-source/tools/mkimage .
+u-boot.itb: u-boot-source-$(UBOOT_VERSION) bl31.elf
+	make -C u-boot-source-$(UBOOT_VERSION) distclean
+	make -C u-boot-source-$(UBOOT_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) BL31=$(CURDIR)/bl31.elf rock-pi-4-rk3399_defconfig
+	make -C u-boot-source-$(UBOOT_VERSION) CROSS_COMPILE=$(CROSS_COMPILE) BL31=$(CURDIR)/bl31.elf
+	cp u-boot-source-$(UBOOT_VERSION)/env/common.o u-boot-source-$(UBOOT_VERSION)/env_common.o
+	$(CROSS_COMPILE)objcopy -O binary -j ".rodata.default_environment" u-boot-source-$(UBOOT_VERSION)/env_common.o
+	tr '\0' '\n' < u-boot-source-$(UBOOT_VERSION)/env_common.o | sort -u > u-boot-default-env.txt
+	rm u-boot-source-$(UBOOT_VERSION)/env_common.o
+	cp u-boot-source-$(UBOOT_VERSION)/idbloader.img u-boot-source-$(UBOOT_VERSION)/u-boot.itb u-boot-source-$(UBOOT_VERSION)/tools/mkenvimage u-boot-source-$(UBOOT_VERSION)/tools/mkimage .
 
 linux-$(KERNEL_MAJOR).tar.xz:
 	wget https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-$(KERNEL_MAJOR).tar.xz
@@ -228,9 +228,9 @@ kernelclean:
 clean: kernelclean
 	rm -rf bl31.elf atf-source/build u-boot-default-env.txt idbloader.img u-boot.itb resize_gpt_disk resize_gpt_disk.aarch64 rockpi4.img.gz rockpi4.img u-boot-env.txt mkenvimage mkimage u-boot-env.bin root.ext4 boot.ext2 linux-modules*.gz broadcom-firmware brcm_patchram_plus
 	sudo rm -rf debian-bootfs debian-rootfs
-	test -d u-boot-source && make -C u-boot-source distclean || true
+	test -d u-boot-source-$(UBOOT_VERSION) && make -C u-boot-source-$(UBOOT_VERSION) distclean || true
 
 distclean: clean
-	rm -rf atf-source u-boot-source linux-*.xz
+	rm -rf atf-source u-boot-source-$(UBOOT_VERSION) linux-*.xz
 
 .PHONY: clean distclean kernelclean
