@@ -21,6 +21,9 @@ Not checked:
 * PCIe seems to work
 * Bluetooth (wip)
 
+However, accessing NOR boot flash chip via SPI works, and configuring the
+PMIC using I2C works, too.
+
 ## Build
 
 You need a debian 10 build machine with root rights.
@@ -55,11 +58,21 @@ won't work.
 
 ## Configure MAC address
 
-Please configure a unique mac address using the command
+Please configure a unique mac address using the linux command
 
 `fw_setenv ethaddr x2:xx:xx:xx:xx:xx`
 
 Replace _x_ with any hexadecimal digit.
+
+When you use an eMMC module, you have to remove the boot area write protection
+with the linux command
+
+`systemctl disable write_protect_boot.service`
+
+and a reboot, first. After changing the MAC address, reenable the write
+protection:
+
+`systemctl enable --now write_protect_boot.service`
 
 ## Filesystem size
 
