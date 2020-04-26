@@ -1,9 +1,9 @@
-ATF_VERSION=v2.2
+ATF_VERSION=v2.3
 UBOOT_VERSION=v2020.04
 CROSS_COMPILE=aarch64-linux-gnu-
 M0_CROSS_COMPILE=arm-none-eabi-
 KERNEL_MAJOR=5.4
-KERNEL_MINOR=33
+KERNEL_MINOR=35
 PARALLEL=5
 MIRROR="http://mirror.wtnet.de/debian/"
 #MIRROR="http://debian.mirror.iphh.net/debian/"
