@@ -1,4 +1,4 @@
-ATF_VERSION=v2.3
+ATF_VERSION=v2.4
 UBOOT_VERSION=v2020.10
 CROSS_COMPILE=aarch64-linux-gnu-
 M0_CROSS_COMPILE=arm-none-eabi-
@@ -231,6 +231,6 @@ clean: kernelclean
 	test -d u-boot-source-$(UBOOT_VERSION) && make -C u-boot-source-$(UBOOT_VERSION) distclean || true
 
 distclean: clean
-	rm -rf atf-source-$(ATF_VERSION) u-boot-source-$(UBOOT_VERSION) linux-*.xz
+	rm -rf atf-source-$(ATF_VERSION) u-boot-source-$(UBOOT_VERSION) linux-*.xz broadcom-wifibt-firmware_0.5_all.deb si2168-firmware
 
 .PHONY: clean distclean kernelclean
