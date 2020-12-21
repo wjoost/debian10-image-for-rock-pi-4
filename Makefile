@@ -1,5 +1,5 @@
 ATF_VERSION=v2.3
-UBOOT_VERSION=v2020.04
+UBOOT_VERSION=v2020.10
 CROSS_COMPILE=aarch64-linux-gnu-
 M0_CROSS_COMPILE=arm-none-eabi-
 KERNEL_MAJOR=5.4
@@ -12,7 +12,7 @@ BRCMFIRMWAREURL="https://github.com/radxa/apt/raw/gh-pages/stretch/pool/main/b/b
 
 all: rockpi4.img.gz
 atf-source-$(ATF_VERSION):
-	git clone -b $(ATF_VERSION) https://git.trustedfirmware.org/TF-A/trusted-firmware-a.git atf-source-$(ATF_VERSION)
+	git clone -b $(ATF_VERSION) --depth=1 https://git.trustedfirmware.org/TF-A/trusted-firmware-a.git atf-source-$(ATF_VERSION)
 	sed -i -E -e 's/(^#define RK3399_BAUDRATE)(.)*$$/#define RK3399_BAUDRATE			1500000/' atf-source-$(ATF_VERSION)/plat/rockchip/rk3399/rk3399_def.h
 	set -e && for p in atf-$(ATF_VERSION)-patches/*.patch; do echo $${p}; patch -d atf-source-$(ATF_VERSION) -p1 -i ../$${p}; done
 
@@ -23,8 +23,8 @@ bl31-$(ATF_VERSION).elf: atf-source-$(ATF_VERSION)
 
 u-boot-source-$(UBOOT_VERSION): u-boot-extra-config
 	rm -rf u-boot-source-$(UBOOT_VERSION)
-	git clone -b $(UBOOT_VERSION) https://gitlab.denx.de/u-boot/u-boot.git/ u-boot-source-$(UBOOT_VERSION)
-	sed -i -e '/i2s1/,+5d' -e '/&hdmi / a\        ddc-i2c-bus = <&i2c3>;' u-boot-source-$(UBOOT_VERSION)/arch/arm/dts/rk3399-rock-pi-4.dts
+	git clone -b $(UBOOT_VERSION) --depth=1 https://gitlab.denx.de/u-boot/u-boot.git/ u-boot-source-$(UBOOT_VERSION)
+	sed -i -e '/i2s1/,+5d' u-boot-source-$(UBOOT_VERSION)/arch/arm/dts/rk3399-rock-pi-4.dtsi
 	set -e && for p in u-boot-$(UBOOT_VERSION)-patches/*.patch; do echo $${p}; patch -d u-boot-source-$(UBOOT_VERSION) -p1 -i ../$${p}; done
 	cat u-boot-extra-config >> u-boot-source-$(UBOOT_VERSION)/configs/rock-pi-4-rk3399_defconfig
 
