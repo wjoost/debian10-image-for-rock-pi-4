@@ -76,7 +76,7 @@ protection:
 
 ## Filesystem size
 
-The created filesystems are probably too small. However, the can be easily
+The created filesystems are probably too small. However, they can be easily
 expanded. To e.g. add 128MiB to the /var filesystem, use the following
 commands:
 
