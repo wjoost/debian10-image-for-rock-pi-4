@@ -2,8 +2,8 @@ ATF_VERSION=v2.4
 UBOOT_VERSION=v2020.10
 CROSS_COMPILE=aarch64-linux-gnu-
 M0_CROSS_COMPILE=arm-none-eabi-
-KERNEL_MAJOR=5.4
-KERNEL_MINOR=84
+KERNEL_MAJOR=5.10
+KERNEL_MINOR=2
 PARALLEL=5
 MIRROR="http://mirror.wtnet.de/debian/"
 #MIRROR="http://debian.mirror.iphh.net/debian/"
@@ -63,7 +63,7 @@ Image-$(KERNEL_MAJOR).$(KERNEL_MINOR): linux-$(KERNEL_MAJOR).$(KERNEL_MINOR) lin
 	rm -rf linux-modules-$(KERNEL_MAJOR).$(KERNEL_MINOR)
 	cp linux-$(KERNEL_MAJOR).$(KERNEL_MINOR)/System.map System.map-$(KERNEL_MAJOR).$(KERNEL_MINOR)
 	cp linux-$(KERNEL_MAJOR).$(KERNEL_MINOR)/.config config-$(KERNEL_MAJOR).$(KERNEL_MINOR)
-	cp linux-$(KERNEL_MAJOR).$(KERNEL_MINOR)/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dtb dtb-$(KERNEL_MAJOR).$(KERNEL_MINOR)
+	cp linux-$(KERNEL_MAJOR).$(KERNEL_MINOR)/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4a.dtb dtb-$(KERNEL_MAJOR).$(KERNEL_MINOR)
 	cp linux-$(KERNEL_MAJOR).$(KERNEL_MINOR)/arch/arm64/boot/Image Image-$(KERNEL_MAJOR).$(KERNEL_MINOR)
 
 resize_gpt_disk: resize_gpt_disk.c
@@ -175,10 +175,10 @@ rockpi4.img.gz: debian-rootfs resize_gpt_disk Image-$(KERNEL_MAJOR).$(KERNEL_MIN
 	sudo bash -c "echo '#fdt set /serial@ff180000 status ok' >> debian-bootfs/boot.cmd"
 	sudo bash -c "echo '' >> debian-bootfs/boot.cmd"
 	sudo bash -c "echo '# Enable wlan' >> debian-bootfs/boot.cmd"
-	sudo bash -c "echo '#fdt set /dwmmc@fe310000 status ok' >> debian-bootfs/boot.cmd"
+	sudo bash -c "echo '#fdt set /mmc@fe310000 status ok' >> debian-bootfs/boot.cmd"
 	sudo bash -c "echo '' >> debian-bootfs/boot.cmd"
 	sudo bash -c "echo '# Disable SD card reader' >> debian-bootfs/boot.cmd"
-	sudo bash -c "echo '#fdt set /dwmmc@fe320000 status disabled' >> debian-bootfs/boot.cmd"
+	sudo bash -c "echo '#fdt set /mmc@fe320000 status disabled' >> debian-bootfs/boot.cmd"
 	sudo bash -c "echo '' >> debian-bootfs/boot.cmd"
 	sudo bash -c "echo '# Load initrd' >> debian-bootfs/boot.cmd"
 	sudo bash -c "echo 'load \$${devtype} \$${devnum}:\$${distro_bootpart} \$${ramdisk_addr_r} \$${prefix}uInitrd' >> debian-bootfs/boot.cmd"

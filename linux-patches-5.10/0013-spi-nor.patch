@@ -1,0 +1,91 @@
+diff -Naurp orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dtsi patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dtsi
+--- orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dtsi	2020-12-13 23:41:30.000000000 +0100
++++ patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dtsi	2020-12-21 16:57:05.879278040 +0100
+@@ -421,6 +421,27 @@
+ 	};
+ };
+ 
++&spi1 {
++	spiflash: spi-flash@0 {
++		compatible = "jedec,spi-nor";
++		#address-cells = <0x1>;
++		#size-cells = <1>;
++		reg = <0x0>;
++		spi-max-frequency = <10000000>;
++		status = "disabled";
++		partitions {
++			compatible = "fixed-partitions";
++			#address-cells = <1>;
++			#size-cells = <1>;
++
++			loader@0 {
++				label = "loader";
++				reg = <0x0 0x400000>;
++			};
++		};
++	};
++};
++
+ &i2c1 {
+ 	i2c-scl-rising-time-ns = <300>;
+ 	i2c-scl-falling-time-ns = <15>;
+diff -Naurp orig/drivers/mtd/spi-nor/core.c patched/drivers/mtd/spi-nor/core.c
+--- orig/drivers/mtd/spi-nor/core.c	2020-12-13 23:41:30.000000000 +0100
++++ patched/drivers/mtd/spi-nor/core.c	2020-12-21 16:41:42.598760798 +0100
+@@ -2024,6 +2024,7 @@ static const struct spi_nor_manufacturer
+ 	&spi_nor_winbond,
+ 	&spi_nor_xilinx,
+ 	&spi_nor_xmc,
++	&spi_nor_xtx,
+ };
+ 
+ static const struct flash_info *
+diff -Naurp orig/drivers/mtd/spi-nor/core.h patched/drivers/mtd/spi-nor/core.h
+--- orig/drivers/mtd/spi-nor/core.h	2020-12-13 23:41:30.000000000 +0100
++++ patched/drivers/mtd/spi-nor/core.h	2020-12-21 16:41:15.622974605 +0100
+@@ -398,6 +398,7 @@ extern const struct spi_nor_manufacturer
+ extern const struct spi_nor_manufacturer spi_nor_winbond;
+ extern const struct spi_nor_manufacturer spi_nor_xilinx;
+ extern const struct spi_nor_manufacturer spi_nor_xmc;
++extern const struct spi_nor_manufacturer spi_nor_xtx;
+ 
+ int spi_nor_write_enable(struct spi_nor *nor);
+ int spi_nor_write_disable(struct spi_nor *nor);
+diff -Naurp orig/drivers/mtd/spi-nor/Makefile patched/drivers/mtd/spi-nor/Makefile
+--- orig/drivers/mtd/spi-nor/Makefile	2020-12-13 23:41:30.000000000 +0100
++++ patched/drivers/mtd/spi-nor/Makefile	2020-12-21 16:40:42.275238237 +0100
+@@ -17,6 +17,7 @@ spi-nor-objs			+= sst.o
+ spi-nor-objs			+= winbond.o
+ spi-nor-objs			+= xilinx.o
+ spi-nor-objs			+= xmc.o
++spi-nor-objs			+= xtx.o
+ obj-$(CONFIG_MTD_SPI_NOR)	+= spi-nor.o
+ 
+ obj-$(CONFIG_MTD_SPI_NOR)	+= controllers/
+diff -Naurp orig/drivers/mtd/spi-nor/xtx.c patched/drivers/mtd/spi-nor/xtx.c
+--- orig/drivers/mtd/spi-nor/xtx.c	1970-01-01 01:00:00.000000000 +0100
++++ patched/drivers/mtd/spi-nor/xtx.c	2020-12-21 16:40:12.691471484 +0100
+@@ -0,0 +1,23 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) 2005, Intec Automation Inc.
++ * Copyright (C) 2014, Freescale Semiconductor, Inc.
++ */
++
++#include <linux/mtd/spi-nor.h>
++
++#include "core.h"
++
++static const struct flash_info xtx_parts[] = {
++	/* XTX */
++	{ "xt25f32b",  INFO(0x0b4016, 0, 64 * 1024, 64,
++			    SECT_4K) },
++	{ "xt25f128b", INFO(0x0b4018, 0, 64 * 1024, 256,
++			    SECT_4K) },
++};
++
++const struct spi_nor_manufacturer spi_nor_xtx = {
++	.name = "xtx",
++	.parts = xtx_parts,
++	.nparts = ARRAY_SIZE(xtx_parts),
++};

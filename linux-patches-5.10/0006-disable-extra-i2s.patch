@@ -1,0 +1,16 @@
+diff -Naurp orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dtsi patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dtsi
+--- orig/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dtsi	2020-12-13 23:41:30.000000000 +0100
++++ patched/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dtsi	2020-12-21 16:20:41.121067628 +0100
+@@ -445,12 +445,6 @@
+ 	status = "okay";
+ };
+ 
+-&i2s1 {
+-	rockchip,playback-channels = <2>;
+-	rockchip,capture-channels = <2>;
+-	status = "okay";
+-};
+-
+ &i2s2 {
+ 	status = "okay";
+ };
