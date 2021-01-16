@@ -1,13 +1,13 @@
 ATF_VERSION=v2.4
-UBOOT_VERSION=v2020.10
+UBOOT_VERSION=v2021.01
 CROSS_COMPILE=aarch64-linux-gnu-
 M0_CROSS_COMPILE=arm-none-eabi-
 KERNEL_MAJOR=5.10
-KERNEL_MINOR=2
+KERNEL_MINOR=7
 PARALLEL=5
 MIRROR="http://mirror.wtnet.de/debian/"
 #MIRROR="http://debian.mirror.iphh.net/debian/"
-VGNAME?=vgsystem
+VGNAME?=vgsysrckpi64
 BRCMFIRMWAREURL="https://github.com/radxa/apt/raw/gh-pages/stretch/pool/main/b/broadcom-wifibt-firmware/broadcom-wifibt-firmware_0.5_all.deb"
 
 all: rockpi4.img.gz
