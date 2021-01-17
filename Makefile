@@ -3,7 +3,7 @@ UBOOT_VERSION=v2021.01
 CROSS_COMPILE=aarch64-linux-gnu-
 M0_CROSS_COMPILE=arm-none-eabi-
 KERNEL_MAJOR=5.10
-KERNEL_MINOR=7
+KERNEL_MINOR=8
 PARALLEL=5
 MIRROR="http://mirror.wtnet.de/debian/"
 #MIRROR="http://debian.mirror.iphh.net/debian/"
@@ -26,6 +26,7 @@ u-boot-source-$(UBOOT_VERSION): u-boot-extra-config
 	git clone -b $(UBOOT_VERSION) --depth=1 https://gitlab.denx.de/u-boot/u-boot.git/ u-boot-source-$(UBOOT_VERSION)
 	sed -i -e '/i2s1/,+5d' u-boot-source-$(UBOOT_VERSION)/arch/arm/dts/rk3399-rock-pi-4.dtsi
 	set -e && for p in u-boot-$(UBOOT_VERSION)-patches/*.patch; do echo $${p}; patch -d u-boot-source-$(UBOOT_VERSION) -p1 -i ../$${p}; done
+	set -e && cut -d= -f1 u-boot-extra-config | while read option; do sed -i -e "/^$${option}=/ d" u-boot-source-$(UBOOT_VERSION)/configs/rock-pi-4-rk3399_defconfig; done
 	cat u-boot-extra-config >> u-boot-source-$(UBOOT_VERSION)/configs/rock-pi-4-rk3399_defconfig
 
 u-boot.itb: u-boot-source-$(UBOOT_VERSION) bl31-$(ATF_VERSION).elf
