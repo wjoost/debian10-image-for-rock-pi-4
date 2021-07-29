@@ -1,0 +1,54 @@
+diff -Naurp u-boot-2021.07.orig/arch/arm/dts/rk3399-rock-pi-4-u-boot.dtsi u-boot-2021.07.patched/arch/arm/dts/rk3399-rock-pi-4-u-boot.dtsi
+--- u-boot-2021.07.orig/arch/arm/dts/rk3399-rock-pi-4-u-boot.dtsi	2021-07-05 17:11:28.000000000 +0200
++++ u-boot-2021.07.patched/arch/arm/dts/rk3399-rock-pi-4-u-boot.dtsi	2021-07-26 18:36:39.990695785 +0200
+@@ -8,7 +8,7 @@
+ 
+ / {
+ 	chosen {
+-		u-boot,spl-boot-order = "same-as-spl", &sdhci, &sdmmc;
++		u-boot,spl-boot-order = "same-as-spl", &sdmmc, &sdhci;
+ 	};
+ };
+ 
+diff -Naurp u-boot-2021.07.orig/include/configs/rockchip-common.h u-boot-2021.07.patched/include/configs/rockchip-common.h
+--- u-boot-2021.07.orig/include/configs/rockchip-common.h	2021-07-05 17:11:28.000000000 +0200
++++ u-boot-2021.07.patched/include/configs/rockchip-common.h	2021-07-26 18:36:39.990695785 +0200
+@@ -17,8 +17,8 @@
+ /* First try to boot from SD (index 0), then eMMC (index 1) */
+ #if CONFIG_IS_ENABLED(CMD_MMC)
+ 	#define BOOT_TARGET_MMC(func) \
+-		func(MMC, mmc, 0) \
+-		func(MMC, mmc, 1)
++		func(MMC, mmc, 1) \
++		func(MMC, mmc, 0)
+ #else
+ 	#define BOOT_TARGET_MMC(func)
+ #endif
+@@ -55,9 +55,9 @@
+ 
+ #ifdef CONFIG_ROCKCHIP_RK3399
+ #define BOOT_TARGET_DEVICES(func) \
++	BOOT_TARGET_USB(func) \
+ 	BOOT_TARGET_MMC(func) \
+ 	BOOT_TARGET_NVME(func) \
+-	BOOT_TARGET_USB(func) \
+ 	BOOT_TARGET_PXE(func) \
+ 	BOOT_TARGET_DHCP(func) \
+ 	BOOT_TARGET_SF(func)
+@@ -76,11 +76,11 @@
+ #endif
+ #define PARTS_DEFAULT \
+ 	"uuid_disk=${uuid_gpt_disk};" \
+-	"name=loader1,start=32K,size=4000K,uuid=${uuid_gpt_loader1};" \
+-	"name=loader2,start=8MB,size=4MB,uuid=${uuid_gpt_loader2};" \
+-	"name=trust,size=4M,uuid=${uuid_gpt_atf};" \
+-	"name=boot,size=112M,bootable,uuid=${uuid_gpt_boot};" \
+-	"name=rootfs,size=-,uuid="ROOT_UUID
++	"name=loader1,start=32K,size=3552K,uuid=${uuid_gpt_loader1};" \
++	"name=ubootenv,start=4064K,size=32K,uuid=${uuid_gpt_ubootenv};" \
++	"name=loader2,start=8MB,size=4MB,uuid=$${uuid_gpt_loader2};" \
++	"name=boot,size=12M,size=128M,bootable,uuid=${uuid_gpt_boot};" \
++	"name=lvm,start=140M,size=-,uuid=${uuid_gpt_lvm};\0"
+ 
+ #endif
+ 
